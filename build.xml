@@ -1,0 +1,57 @@
+<project name="ClayCrafting" default="build">
+
+    <property name="mcp.home" location="../forge/mcp"/>
+    <condition property="python.exe" value="${mcp.home}/runtime/bin/python/python_mcp" else="python">
+        <os family="Windows" />
+    </condition>
+    <property name="mcp.obfoutput" location="${mcp.home}/reobf" />
+    <property name="mcp.obfoutput.classes" location="${mcp.obfoutput}/minecraft" />
+    <property name="mcp.srcdir" location="${mcp.home}/src/minecraft" />
+    <property name="mcp.backup.srcdir" location="${mcp.home}/backup/src" />
+    <property name="src" location="src"/>
+    <property name="jarname" value="claycrafting.jar"/>
+    <property name="release.dir" location="out/artifacts"/>
+
+    <target name="backup-mcp-src">
+        <deltree dir="${mcp.backup.srcdir}"/>
+        <mkdir dir="${mcp.backup.srcdir}"/>
+        <copy todir="${mcp.backup.srcdir}" overwrite="true" verbose="true">
+            <fileset dir="${mcp.srcdir}"/>
+        </copy>
+    </target>
+
+    <target name="restore-mcp-src">
+        <deltree dir="${mcp.srcdir}"/>
+        <mkdir dir="${mcp.srcdir}"/>
+        <copy todir="${mcp.srcdir}" overwrite="true" verbose="true">
+            <fileset dir="${mcp.backup.srcdir}"/>
+        </copy>
+    </target>
+
+    <target name="copy-src">
+        <copy todir="${mcp.srcdir}" overwrite="true" verbose="true">
+            <fileset dir="${src}" includes="**/*.java"/>
+        </copy>
+    </target>
+
+    <target name="recompile">
+        <exec executable="${python.exe}" dir="${mcp.home}" failonerror="true">
+            <arg value="${mcp.home}/runtime/recompile.py" />
+        </exec>
+    </target>
+
+    <target name="reobfuscate">
+        <exec executable="${python.exe}" dir="${mcp.home}">
+            <arg value="${mcp.home}/runtime/reobfuscate.py" />
+        </exec>
+    </target>
+
+    <target name="jar">
+        <mkdir dir="${release.dir}"/>
+        <jar destfile="${release.dir}/${jarname}">
+            <fileset dir="${mcp.obfoutput.classes}" includes="**/*.class" />
+        </jar>
+    </target>
+
+    <target name="build" depends="backup-mcp-src,copy-src,recompile,reobfuscate,restore-mcp-src,jar"/>
+</project>
